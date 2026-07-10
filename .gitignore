@@ -1,0 +1,9 @@
+node_modules/
+.stock_cache.json
+.mingyulist_cache.json
+.mingyulist_overnight.json
+.mingyulist_weights.json
+.academic_trend_cache.json
+backups/
+/tmp/
+*.log
