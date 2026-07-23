@@ -532,8 +532,6 @@ const ISA_UNIVERSE = [
   { symbol: '133690', name: 'TIGER 미국나스닥100', type: 'kr_etf', sector: '미국나스닥', weight: 1.2 }
 ];
 
-const TOTAL_BUDGET = 20000000; // 2000만원
-
 async function fetchNaverStockPrice(code) {
   try {
     const { data } = await axios.get(`https://m.stock.naver.com/api/stock/${code}/basic`, { timeout: 10000 });
@@ -566,7 +564,29 @@ async function fetchNaver5DayChange(code) {
   } catch { return null; }
 }
 
-// ===== 밸류에이션 데이터 (PER/PBR/ROE/배당) =====
+// ===== 밸류에이션 데이터 (PER/PBR/ROE/배당/시가총액/동일업종PER) =====
+
+// 동일업종 PER 가져오기 (데스크톱 네이버 금융에서 파싱)
+async function fetchSectorPer(stockCode) {
+  try {
+    var url = 'https://finance.naver.com/item/main.naver?code=' + stockCode;
+    var resp = await axios.get(url, { timeout: 10000, responseType: 'text' });
+    var html = resp.data;
+
+    // 동일업종 PER 파싱: <em>17.68</em>배
+    var perMatch = html.match(/동일업종 PER[\s\S]*?<em>([\d.]+)<\/em>배/);
+    var sectorPer = perMatch ? parseFloat(perMatch[1]) : null;
+
+    // 동일업종 등락률 파싱: +3.08% 또는 -1.23%
+    var rateMatch = html.match(/동일업종 등락률[\s\S]*?<em>\s*([+\-]?[\d.]+%)\s*<\/em>/);
+    var sectorChange = rateMatch ? parseFloat(rateMatch[1].replace('%', '')) : null;
+
+    return { sectorPer: sectorPer, sectorChange: sectorChange };
+  } catch (e) {
+    return { sectorPer: null, sectorChange: null };
+  }
+}
+
 async function fetchValuation(stockCode) {
   try {
     var url = 'https://m.stock.naver.com/api/stock/' + stockCode + '/integration';
@@ -588,10 +608,39 @@ async function fetchValuation(stockCode) {
     var low52 = parseInt((infos.lowPriceOf52Weeks || '0').replace(/[,원]/g, '')) || null;
     var foreignRate = parseFloat((infos.foreignRate || '0').replace(/[%,]/g, '')) || null;
 
+    // 시가총액 파싱 (단위: 백만원, "1,572조 6,489억" 또는 "33조 4,291억" 또는 "5,540,601" 형태)
+    var marketCapRaw = infos.marketValue || '';
+    var marketCap = null;
+    if (marketCapRaw.includes('조')) {
+      var joMatch = marketCapRaw.match(/([\d,]+)조\s*([\d,]*)억?/);
+      if (joMatch) {
+        var jo = parseInt(joMatch[1].replace(/,/g, '')) || 0;
+        var eok = parseInt((joMatch[2] || '0').replace(/,/g, '')) || 0;
+        marketCap = jo * 10000 + eok; // 억원 단위
+      }
+    } else {
+      // 숫자만 있는 경우 (백만원 단위)
+      var numVal = parseInt(marketCapRaw.replace(/[,]/g, '')) || 0;
+      if (numVal > 0) marketCap = Math.round(numVal / 100); // 백만원 → 억원
+    }
+
+    // 시가총액 기반 대형/중소형주 분류
+    var capCategory = null;
+    if (marketCap) {
+      if (marketCap >= 100000) capCategory = 'large';       // 10조 이상: 대형주
+      else if (marketCap >= 20000) capCategory = 'mid';     // 2조~10조: 중형주
+      else capCategory = 'small';                            // 2조 미만: 소형주
+    }
+
+    // 동일업종 PER 가져오기
+    var sectorData = await fetchSectorPer(stockCode);
+    var sectorPer = sectorData.sectorPer;
+    var sectorChange = sectorData.sectorChange;
+
     // ROE 근사치 계산: ROE ≈ PBR / PER * 100
     var roe = (per && pbr && per > 0) ? Math.round(pbr / per * 10000) / 100 : null;
 
-    // 밸류에이션 점수 계산 (최대 ±12점)
+    // 밸류에이션 점수 계산 (최대 ±18점, 기존 ±12에서 확장)
     var score = 0;
 
     // PER 기반 (추정PER 우선, 없으면 현재PER)
@@ -615,6 +664,29 @@ async function fetchValuation(stockCode) {
     if (dividend && dividend > 3) score += 3;
     else if (dividend && dividend > 2) score += 1;
 
+    // 동일업종 PER 대비 상대 밸류에이션 (최대 ±6점)
+    var sectorPerScore = 0;
+    var perVsSector = null;
+    if (usePer && sectorPer && sectorPer > 0) {
+      perVsSector = Math.round((usePer / sectorPer - 1) * 1000) / 10; // % 차이
+      // 업종 PER 대비 30% 이상 저렴 → 강한 저평가 신호
+      if (perVsSector <= -30) sectorPerScore = 6;
+      else if (perVsSector <= -15) sectorPerScore = 4;
+      else if (perVsSector <= -5) sectorPerScore = 2;
+      // 업종 PER 대비 30% 이상 비싸면 → 고평가 신호
+      else if (perVsSector >= 50) sectorPerScore = -4;
+      else if (perVsSector >= 30) sectorPerScore = -3;
+      else if (perVsSector >= 15) sectorPerScore = -1;
+    }
+    score += sectorPerScore;
+
+    // 시가총액 기반 안정성 가중치 (최대 ±3점)
+    var capScore = 0;
+    if (capCategory === 'large') capScore = 2;       // 대형주: 유동성/안정성 프리미엄
+    else if (capCategory === 'mid') capScore = 1;    // 중형주: 약간 프리미엄
+    else if (capCategory === 'small') capScore = -1; // 소형주: 리스크 디스카운트
+    score += capScore;
+
     // 52주 저점 근접 보너스 (현재가가 52주 저점 대비 10% 이내면 가산)
     // → 이미 phase1에서 하락 반영하므로 여기선 생략
 
@@ -628,7 +700,14 @@ async function fetchValuation(stockCode) {
       high_52w: high52,
       low_52w: low52,
       foreign_rate: foreignRate,
-      score: Math.max(-12, Math.min(12, score))
+      market_cap: marketCap,             // 억원 단위
+      cap_category: capCategory,          // 'large', 'mid', 'small'
+      cap_score: capScore,
+      sector_per: sectorPer,             // 동일업종 PER
+      sector_change: sectorChange,       // 동일업종 등락률(%)
+      per_vs_sector: perVsSector,        // 업종 대비 PER 차이(%)
+      sector_per_score: sectorPerScore,
+      score: Math.max(-18, Math.min(18, score))
     };
   } catch (e) {
     return null;
@@ -1621,6 +1700,12 @@ async function analyzeISAUniverse() {
     // 대기업/신뢰 가중치
     score += (item.weight - 0.8) * signalWeights.weight_multiplier;
 
+    // ISA 투자 선호도: ETF >>>>>> 대기업 개별종목 > 중소형 개별종목
+    // ETF는 분산효과+수수료 효율로 기본 우대
+    if (item.type === 'kr_etf') score += 12;
+    // 개별종목은 대기업(weight 1.1+)만 기본 포함, 중소형은 감점
+    else if (item.type === 'kr_stock' && item.weight < 1.0) score -= 8;
+
     // 활성 섹터
     var hotSectors = ['반도체', '미국나스닥', '미국지수', 'AI/로봇', '미국반도체', 'IT/플랫폼'];
     if (hotSectors.includes(item.sector)) score += signalWeights.hot_sector_bonus;
@@ -1792,8 +1877,25 @@ async function analyzeISAUniverse() {
 
     score = Math.round(score * 10) / 10;
 
-    // 임계값 이상만 추천 리스트에 추가 (단, 최소 5개는 확보)
-    if (score > MIN_SCORE || results.length < MIN_PICKS) {
+    // ISA 투자 정책: 중견기업 이하 개별종목은 확신 있을 때만 추천
+    // ETF는 기본 임계값, 대형주는 기본 임계값, 중소형주는 높은 임계값 적용
+    var itemMinScore = MIN_SCORE;
+    if (item.type === 'kr_stock' && valuation && valuation.cap_category !== 'large') {
+      itemMinScore = MIN_SCORE * 2.5; // 중소형 개별종목: 25점 이상이어야 추천 (확신 필요)
+    } else if (item.type === 'kr_stock' && !valuation) {
+      itemMinScore = MIN_SCORE * 2; // 밸류에이션 데이터 없는 개별종목도 높은 기준 적용
+    }
+
+    // 임계값 이상만 추천 리스트에 추가 (단, 최소 5개는 확보 - ETF 우선)
+    var shouldInclude = score > itemMinScore;
+    // 최소 5개 미달 시: ETF와 대형주만 낮은 기준으로 허용
+    if (!shouldInclude && results.length < MIN_PICKS) {
+      if (item.type === 'kr_etf' || (item.type === 'kr_stock' && valuation && valuation.cap_category === 'large')) {
+        shouldInclude = true;
+      }
+    }
+
+    if (shouldInclude) {
       results.push({
         symbol: item.symbol,
         name: item.name,
@@ -1817,7 +1919,7 @@ async function analyzeISAUniverse() {
         macro: { score: macro.score, sentiment: macro.sentiment },
         academic: { score: academicScore, growth_rate: (academicTrendCache.data && academicTrendCache.data[item.sector]) ? academicTrendCache.data[item.sector].growth_rate : null },
         institutional: { score: instScore.score, foreign_score: instScore.foreignScore, organ_score: instScore.organScore, trend: instScore.trend, detail: instScore.detail },
-        valuation: valuation ? { per: valuation.per, pbr: valuation.pbr, roe: valuation.roe, dividend_yield: valuation.dividend_yield, high_52w: valuation.high_52w, low_52w: valuation.low_52w, score: valuation.score } : null,
+        valuation: valuation ? { per: valuation.per, pbr: valuation.pbr, roe: valuation.roe, dividend_yield: valuation.dividend_yield, high_52w: valuation.high_52w, low_52w: valuation.low_52w, market_cap: valuation.market_cap, cap_category: valuation.cap_category, cap_score: valuation.cap_score, sector_per: valuation.sector_per, per_vs_sector: valuation.per_vs_sector, sector_per_score: valuation.sector_per_score, score: valuation.score } : null,
         fx_rate: { score: fxScore.score, usdkrw: fxData.usdkrw ? fxData.usdkrw.rate : null, fx_change: fxScore.fx_change, rate_10y: fxScore.rate_10y }
       });
     }
@@ -1831,17 +1933,10 @@ async function analyzeISAUniverse() {
     topPicks = topPicks.filter(function(r, idx) { return idx < MIN_PICKS || r.score > MIN_SCORE; });
   }
 
-  const totalScore = topPicks.reduce((sum, p) => sum + Math.max(p.score, 1), 0);
   const recommendations = topPicks.map(pick => {
-    const ratio = Math.max(pick.score, 1) / totalScore;
-    const allocAmount = Math.round(TOTAL_BUDGET * ratio / 10000) * 10000;
-    const shares = pick.price > 0 ? Math.floor(allocAmount / pick.price) : 0;
     const reason = generateReason(pick, rotation);
     return {
       ...pick,
-      allocation_krw: allocAmount,
-      allocation_pct: (ratio * 100).toFixed(1) + '%',
-      suggested_shares: shares,
       reason
     };
   });
@@ -1915,6 +2010,17 @@ function generateReason(pick, rotation) {
   // 섹터/신뢰
   if (pick.weight >= 1.2) parts.push('우량 대형주/ETF');
 
+  // 밸류에이션 (시가총액/업종PER 비교)
+  if (pick.valuation) {
+    if (pick.valuation.per_vs_sector !== null && pick.valuation.per_vs_sector <= -20) {
+      parts.push('💰 동일업종 대비 ' + Math.abs(pick.valuation.per_vs_sector) + '% 저평가');
+    } else if (pick.valuation.per_vs_sector !== null && pick.valuation.per_vs_sector >= 30) {
+      parts.push('⚠️ 업종 대비 PER 고평가');
+    }
+    if (pick.valuation.cap_category === 'large') parts.push('🏢 대형주');
+  }
+  if (pick.type === 'kr_etf') parts.push('📦 ETF (ISA 최적)');
+
   if (parts.length === 0) parts.push(`${pick.sector} 분할매수 적합`);
 
   return parts.join(' | ');
@@ -1953,11 +2059,10 @@ app.get('/mingyulist', async (req, res) => {
     const result = await analyzeISAUniverse();
     const recommendations = result.recommendations;
     const rotation = result.rotation;
-    const totalAlloc = recommendations.reduce((sum, r) => sum + r.allocation_krw, 0);
 
     var responseData = {
       title: '🎯 민규의 ISA 매수 추천 리스트',
-      strategy: '섹터 로테이션 감지 + 반등 가능성 + 대기업/활성섹터 가중치 기반',
+      strategy: 'ETF 우선 + 섹터 로테이션 감지 + 대형주 위주 + 업종PER 비교 기반',
       market_analysis: {
         context: rotation.market_context,
         rotation_detected: rotation.detected,
@@ -1975,8 +2080,6 @@ app.get('/mingyulist', async (req, res) => {
         twitter_api_calls: result.twitter_calls,
         final_picks: recommendations.length
       },
-      budget: '2,000만원',
-      total_allocated: totalAlloc.toLocaleString() + '원',
       generated_at: new Date().toISOString(),
       source: 'realtime',
       disclaimer: '⚠️ AI 기반 참고용 추천이며, 투자 판단은 본인 책임입니다.',
@@ -2014,11 +2117,10 @@ app.get('/mingyulist/refresh', async (req, res) => {
     const result = await analyzeISAUniverse();
     const recommendations = result.recommendations;
     const rotation = result.rotation;
-    const totalAlloc = recommendations.reduce((sum, r) => sum + r.allocation_krw, 0);
 
     var responseData = {
       title: '🎯 민규의 ISA 매수 추천 리스트',
-      strategy: '섹터 로테이션 감지 + 반등 가능성 + 대기업/활성섹터 가중치 기반',
+      strategy: 'ETF 우선 + 섹터 로테이션 감지 + 대형주 위주 + 업종PER 비교 기반',
       market_analysis: {
         context: rotation.market_context,
         rotation_detected: rotation.detected,
@@ -2031,8 +2133,6 @@ app.get('/mingyulist/refresh', async (req, res) => {
         twitter_api_calls: result.twitter_calls,
         final_picks: recommendations.length
       },
-      budget: '2,000만원',
-      total_allocated: totalAlloc.toLocaleString() + '원',
       generated_at: new Date().toISOString(),
       type: 'main',
       disclaimer: '⚠️ AI 기반 참고용 추천이며, 투자 판단은 본인 책임입니다.',
@@ -2130,7 +2230,6 @@ app.get('/mingyulist/overnight', async (req, res) => {
         main_score: rec.score,
         adjusted_score: Math.round((rec.score + adjustment) * 10) / 10,
         adjustment: adjustment,
-        allocation_krw: rec.allocation_krw,
         overnight_signal: signal,
         ref_etf: refETF,
         ref_change: usData.change
@@ -2338,7 +2437,7 @@ app.get('/report', async (req, res) => {
         var ma = mgData.market_analysis || {};
         if (ma.context) lines.push('  시장: ' + ma.context);
       }
-      lines.push('  예산: ' + (mgData.budget || '') + ' | 생성: ' + (mgData.generated_at || '').slice(0, 16));
+      lines.push('  생성: ' + (mgData.generated_at || '').slice(0, 16));
 
       // 환율/금리 표시
       var fxInfo = await fetchFxAndRates();
@@ -2359,7 +2458,7 @@ app.get('/report', async (req, res) => {
         if (ov && ov.adjustment <= -10) continue;
         if (ov && ov.adjusted_score < 5) continue;
 
-        var alloc = typeof r.allocation_krw === 'number' ? r.allocation_krw.toLocaleString() : r.allocation_krw;
+        var alloc = '';
 
         // 점수 표시
         var scorePart = '';
@@ -2389,7 +2488,7 @@ app.get('/report', async (req, res) => {
           signal = r.reason || '';
         }
 
-        lines.push(r.name + ' (' + r.sector + ') – ' + (r.allocation_pct || '') + ' / ' + alloc + '원' + scorePart);
+        lines.push(r.name + ' (' + r.sector + ')' + scorePart);
         lines.push('  ' + signal);
         if (trendLine) lines.push(trendLine);
 
@@ -2461,7 +2560,6 @@ function saveBackup(data) {
           score: r.score,
           today_change: r.today_change,
           week_change: r.week_change,
-          allocation_krw: r.allocation_krw,
           news_score: r.news ? r.news.score : 0,
           forum_sentiment: r.forum ? r.forum.sentiment : 'neutral',
           global_news_score: r.global_news ? r.global_news.score : 0,
