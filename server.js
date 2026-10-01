@@ -504,32 +504,83 @@ app.get('/watchlist/refresh-korea', async (req, res) => {
 
 // ===== /mingyulist - ISA 투자 추천 =====
 const ISA_UNIVERSE = [
-  // 한국 주식 (대기업)
+  // ===== 한국 대기업 (시총 상위, ISA 투자 가능) =====
   { symbol: '005930', name: '삼성전자', type: 'kr_stock', sector: '반도체', weight: 1.3 },
   { symbol: '000660', name: 'SK하이닉스', type: 'kr_stock', sector: '반도체', weight: 1.3 },
   { symbol: '373220', name: 'LG에너지솔루션', type: 'kr_stock', sector: '배터리', weight: 1.1 },
-  { symbol: '005380', name: '현대차', type: 'kr_stock', sector: '자동차', weight: 1.1 },
+  { symbol: '005380', name: '현대차', type: 'kr_stock', sector: '자동차', weight: 1.2 },
+  { symbol: '000270', name: '기아', type: 'kr_stock', sector: '자동차', weight: 1.1 },
   { symbol: '035420', name: 'NAVER', type: 'kr_stock', sector: 'IT/플랫폼', weight: 1.2 },
-  { symbol: '035720', name: '카카오', type: 'kr_stock', sector: 'IT/플랫폼', weight: 1.0 },
-  { symbol: '006400', name: '삼성SDI', type: 'kr_stock', sector: '배터리', weight: 1.0 },
+  { symbol: '068270', name: '셀트리온', type: 'kr_stock', sector: '바이오', weight: 1.1 },
   { symbol: '051910', name: 'LG화학', type: 'kr_stock', sector: '화학/배터리', weight: 1.0 },
-  { symbol: '003670', name: '포스코퓨처엠', type: 'kr_stock', sector: '소재', weight: 0.9 },
-  { symbol: '247540', name: '에코프로비엠', type: 'kr_stock', sector: '2차전지소재', weight: 0.9 },
-  // 한국 ETF
+  { symbol: '006400', name: '삼성SDI', type: 'kr_stock', sector: '배터리', weight: 1.0 },
+  { symbol: '035720', name: '카카오', type: 'kr_stock', sector: 'IT/플랫폼', weight: 1.0 },
+  { symbol: '005490', name: 'POSCO홀딩스', type: 'kr_stock', sector: '소재', weight: 1.1 },
+  { symbol: '055550', name: '신한지주', type: 'kr_stock', sector: '금융', weight: 1.0 },
+  { symbol: '105560', name: 'KB금융', type: 'kr_stock', sector: '금융', weight: 1.0 },
+  { symbol: '028260', name: '삼성물산', type: 'kr_stock', sector: '건설/지주', weight: 1.0 },
+  { symbol: '012330', name: '현대모비스', type: 'kr_stock', sector: '자동차부품', weight: 1.0 },
+  { symbol: '066570', name: 'LG전자', type: 'kr_stock', sector: '가전/전자', weight: 1.0 },
+  { symbol: '034020', name: '두산에너빌리티', type: 'kr_stock', sector: '원전/에너지', weight: 1.0 },
+  { symbol: '009150', name: '삼성전기', type: 'kr_stock', sector: '전자부품', weight: 1.0 },
+  { symbol: '010120', name: 'LS ELECTRIC', type: 'kr_stock', sector: 'AI전력인프라', weight: 1.0 },
+  { symbol: '042660', name: '한화오션', type: 'kr_stock', sector: '조선', weight: 1.0 },
+  { symbol: '402340', name: 'SK스퀘어', type: 'kr_stock', sector: 'IT/지주', weight: 1.0 },
+  { symbol: '010140', name: '삼성중공업', type: 'kr_stock', sector: '조선', weight: 0.9 },
+  { symbol: '015760', name: '한국전력', type: 'kr_stock', sector: '전력/유틸리티', weight: 0.9 },
+  { symbol: '009540', name: 'HD한국조선해양', type: 'kr_stock', sector: '조선', weight: 1.0 },
+  { symbol: '096770', name: 'SK이노베이션', type: 'kr_stock', sector: '에너지/배터리', weight: 0.9 },
+  { symbol: '017670', name: 'SK텔레콤', type: 'kr_stock', sector: 'IT/통신', weight: 0.9 },
+  { symbol: '018260', name: '삼성에스디에스', type: 'kr_stock', sector: 'IT/플랫폼', weight: 0.9 },
+  { symbol: '033780', name: 'KT&G', type: 'kr_stock', sector: '소비재', weight: 0.9 },
+  // ===== 국내 지수 ETF =====
   { symbol: '069500', name: 'KODEX 200', type: 'kr_etf', sector: '국내지수', weight: 1.2 },
   { symbol: '229200', name: 'KODEX 코스닥150', type: 'kr_etf', sector: '국내지수', weight: 1.0 },
+  { symbol: '292150', name: 'TIGER 코리아TOP10', type: 'kr_etf', sector: '국내지수', weight: 1.1 },
+  { symbol: '495050', name: 'RISE 코리아밸류업', type: 'kr_etf', sector: '국내지수', weight: 1.0 },
+  // ===== 반도체 ETF =====
   { symbol: '091160', name: 'KODEX 반도체', type: 'kr_etf', sector: '반도체', weight: 1.3 },
-  { symbol: '091170', name: 'KODEX 은행', type: 'kr_etf', sector: '금융', weight: 1.0 },
-  { symbol: '266360', name: 'KODEX 2차전지산업', type: 'kr_etf', sector: '2차전지', weight: 1.1 },
-  { symbol: '364690', name: 'KODEX Fn K-뉴딜디지털플러스', type: 'kr_etf', sector: 'IT/디지털', weight: 0.9 },
-  // 해외 ETF (ISA에서 투자 가능한 국내상장 해외ETF)
-  { symbol: '379800', name: 'KODEX 미국S&P500TR', type: 'kr_etf', sector: '미국지수', weight: 1.3 },
-  { symbol: '379810', name: 'KODEX 미국나스닥100TR', type: 'kr_etf', sector: '미국나스닥', weight: 1.3 },
+  { symbol: '396500', name: 'TIGER 반도체TOP10', type: 'kr_etf', sector: '반도체', weight: 1.2 },
+  { symbol: '395270', name: 'HANARO Fn K-반도체', type: 'kr_etf', sector: '반도체', weight: 1.1 },
+  { symbol: '442580', name: 'PLUS 글로벌HBM반도체', type: 'kr_etf', sector: '반도체', weight: 1.1 },
+  { symbol: '446770', name: 'ACE 글로벌반도체TOP4 Plus', type: 'kr_etf', sector: '반도체', weight: 1.1 },
+  { symbol: '455850', name: 'SOL AI반도체소부장', type: 'kr_etf', sector: '반도체', weight: 1.0 },
+  // ===== 미국 반도체 ETF =====
   { symbol: '453810', name: 'KODEX 미국반도체MV', type: 'kr_etf', sector: '미국반도체', weight: 1.2 },
-  { symbol: '200250', name: 'KOSEF 인도Nifty50', type: 'kr_etf', sector: '인도', weight: 1.0 },
-  { symbol: '371460', name: 'TIGER 차이나전기차SOLACTIVE', type: 'kr_etf', sector: '중국전기차', weight: 0.8 },
+  { symbol: '381180', name: 'TIGER 미국필라델피아반도체나스닥', type: 'kr_etf', sector: '미국반도체', weight: 1.2 },
+  { symbol: '390390', name: 'KODEX 미국반도체', type: 'kr_etf', sector: '미국반도체', weight: 1.1 },
+  // ===== 미국 지수 ETF =====
+  { symbol: '379800', name: 'KODEX 미국S&P500TR', type: 'kr_etf', sector: '미국지수', weight: 1.3 },
   { symbol: '143850', name: 'TIGER 미국S&P500', type: 'kr_etf', sector: '미국지수', weight: 1.2 },
-  { symbol: '133690', name: 'TIGER 미국나스닥100', type: 'kr_etf', sector: '미국나스닥', weight: 1.2 }
+  { symbol: '379810', name: 'KODEX 미국나스닥100TR', type: 'kr_etf', sector: '미국나스닥', weight: 1.3 },
+  { symbol: '133690', name: 'TIGER 미국나스닥100', type: 'kr_etf', sector: '미국나스닥', weight: 1.2 },
+  // ===== 미국 빅테크/AI ETF =====
+  { symbol: '381170', name: 'TIGER 미국테크TOP10 INDXX', type: 'kr_etf', sector: '미국빅테크', weight: 1.1 },
+  { symbol: '465580', name: 'ACE 미국빅테크TOP7 Plus', type: 'kr_etf', sector: '미국빅테크', weight: 1.1 },
+  { symbol: '456600', name: 'TIME 글로벌AI인공지능액티브', type: 'kr_etf', sector: '글로벌AI', weight: 1.0 },
+  // ===== AI/전력인프라 ETF =====
+  { symbol: '487230', name: 'KODEX 미국AI전력핵심인프라', type: 'kr_etf', sector: 'AI전력인프라', weight: 1.1 },
+  { symbol: '487240', name: 'KODEX AI전력핵심설비', type: 'kr_etf', sector: 'AI전력인프라', weight: 1.1 },
+  // ===== 로봇/우주 ETF =====
+  { symbol: '445290', name: 'KODEX 로봇액티브', type: 'kr_etf', sector: 'AI/로봇', weight: 1.0 },
+  // ===== 2차전지/배터리 ETF =====
+  { symbol: '305720', name: 'KODEX 2차전지산업', type: 'kr_etf', sector: '2차전지', weight: 1.0 },
+  { symbol: '305540', name: 'TIGER 2차전지테마', type: 'kr_etf', sector: '2차전지', weight: 0.9 },
+  // ===== 바이오/헬스케어 ETF =====
+  { symbol: '244580', name: 'KODEX 바이오', type: 'kr_etf', sector: '바이오', weight: 0.9 },
+  { symbol: '143860', name: 'TIGER 헬스케어', type: 'kr_etf', sector: '헬스케어', weight: 0.9 },
+  // ===== 배당 ETF =====
+  { symbol: '458730', name: 'TIGER 미국배당다우존스', type: 'kr_etf', sector: '미국배당', weight: 1.0 },
+  { symbol: '446720', name: 'SOL 미국배당다우존스', type: 'kr_etf', sector: '미국배당', weight: 1.0 },
+  { symbol: '161510', name: 'PLUS 고배당주', type: 'kr_etf', sector: '국내배당', weight: 0.9 },
+  // ===== 방산/조선 ETF =====
+  { symbol: '449450', name: 'PLUS K방산', type: 'kr_etf', sector: '방산', weight: 1.0 },
+  { symbol: '466920', name: 'SOL 조선TOP3플러스', type: 'kr_etf', sector: '조선', weight: 1.0 },
+  // ===== 리츠/부동산 ETF =====
+  { symbol: '329200', name: 'TIGER 리츠부동산인프라', type: 'kr_etf', sector: '리츠', weight: 0.8 },
+  // ===== 해외 테마 ETF =====
+  { symbol: '200250', name: 'KOSEF 인도Nifty50', type: 'kr_etf', sector: '인도', weight: 1.0 },
+  { symbol: '371460', name: 'TIGER 차이나전기차SOLACTIVE', type: 'kr_etf', sector: '중국전기차', weight: 0.8 }
 ];
 
 async function fetchNaverStockPrice(code) {
@@ -1399,6 +1450,132 @@ async function fetchMacroNews() {
   };
 }
 
+// ===== 시장 위험 경고 자동 수집 =====
+var MARKET_RISK_CACHE = { data: null, timestamp: 0 };
+var MARKET_RISK_TTL = 30 * 60 * 1000; // 30분 캐시
+
+async function fetchMarketRiskAlerts() {
+  // 캐시 유효하면 재사용
+  if (MARKET_RISK_CACHE.data && Date.now() - MARKET_RISK_CACHE.timestamp < MARKET_RISK_TTL) {
+    return MARKET_RISK_CACHE.data;
+  }
+
+  var riskNews = [];
+  var riskReddit = [];
+  var riskKeywords = {
+    crash: ['crash', 'plunge', 'plummet', 'tank', 'rout', 'sell-off', 'selloff', 'correction', 'bear market', 'collapse', 'tumble', 'nosedive'],
+    cause: ['recession', 'tariff', 'trade war', 'rate hike', 'inflation', 'bubble', 'overvalued', 'debt', 'default', 'geopolitical', 'war', 'sanction', 'oil spike']
+  };
+
+  // 1. Google News RSS - 나스닥/S&P/반도체 폭락 관련
+  var riskQueries = [
+    { query: 'nasdaq+crash+OR+correction+OR+sell-off', label: '나스닥' },
+    { query: 'S%26P500+crash+OR+correction+OR+drop', label: 'S&P500' },
+    { query: 'semiconductor+chip+stock+crash+OR+plunge+OR+rout', label: '반도체' },
+    { query: 'stock+market+risk+OR+crash+OR+recession+OR+crisis', label: '시장위기' }
+  ];
+
+  for (var i = 0; i < riskQueries.length; i++) {
+    try {
+      var rssUrl = 'https://news.google.com/rss/search?q=' + riskQueries[i].query + '+when:2d&hl=en-US&gl=US&ceid=US:en';
+      var resp = await axios.get(rssUrl, { timeout: 8000 });
+      var xml = resp.data;
+
+      var titles = [];
+      var titleRegex = /<title><!\[CDATA\[(.*?)\]\]><\/title>|<title>(.*?)<\/title>/g;
+      var match;
+      while ((match = titleRegex.exec(xml)) !== null) {
+        var t = match[1] || match[2] || '';
+        if (t && !t.includes('Google News') && !t.includes('RSS')) titles.push(t);
+      }
+
+      // 폭락/위기 키워드 포함된 뉴스만 필터
+      for (var j = 0; j < Math.min(titles.length, 15); j++) {
+        var lower = titles[j].toLowerCase();
+        var hasCrashWord = riskKeywords.crash.some(function(w) { return lower.includes(w); });
+        if (hasCrashWord) {
+          riskNews.push({ headline: titles[j], category: riskQueries[i].label });
+        }
+      }
+    } catch (e) {}
+  }
+
+  // 2. Reddit - 폭락/위험 관련 커뮤니티 감성
+  var redditQueries = ['nasdaq crash', 'stock market crash', 'semiconductor selloff'];
+  for (var i = 0; i < redditQueries.length; i++) {
+    try {
+      var redditUrl = 'https://www.reddit.com/search.json?q=' + encodeURIComponent(redditQueries[i]) + '&sort=new&t=week&limit=10';
+      var resp = await axios.get(redditUrl, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (StockBot/1.0)' },
+        timeout: 8000
+      });
+      if (resp.data && resp.data.data && resp.data.data.children) {
+        var posts = resp.data.data.children;
+        for (var j = 0; j < posts.length; j++) {
+          var post = posts[j].data;
+          var title = post.title || '';
+          var ups = post.ups || 0;
+          if (ups >= 20) { // 최소 20 upvotes
+            var lowerTitle = title.toLowerCase();
+            var isRelevant = riskKeywords.crash.some(function(w) { return lowerTitle.includes(w); });
+            if (isRelevant) {
+              riskReddit.push({ title: title, upvotes: ups, subreddit: post.subreddit || '' });
+            }
+          }
+        }
+      }
+    } catch (e) {}
+  }
+
+  // 3. 한국 RSS - 폭락/급락 관련
+  var krRiskFeeds = [
+    'https://www.yna.co.kr/rss/economy.xml',
+    'https://www.hankyung.com/feed/stock'
+  ];
+  var krRiskKw = ['폭락', '급락', '나스닥', '반도체', '조정', '위기', '매도', '공포'];
+  var krRiskNews = [];
+
+  for (var i = 0; i < krRiskFeeds.length; i++) {
+    try {
+      var resp = await axios.get(krRiskFeeds[i], { timeout: 8000 });
+      var xml = resp.data;
+      var titles = [];
+      var titleRegex = /<title><!\[CDATA\[(.*?)\]\]><\/title>|<title>(.*?)<\/title>/g;
+      var match;
+      while ((match = titleRegex.exec(xml)) !== null) {
+        var t = match[1] || match[2] || '';
+        if (t) titles.push(t);
+      }
+      for (var j = 0; j < Math.min(titles.length, 20); j++) {
+        var hasRisk = krRiskKw.some(function(kw) { return titles[j].includes(kw); });
+        if (hasRisk) krRiskNews.push(titles[j]);
+      }
+    } catch (e) {}
+  }
+
+  // 중복 제거 (유사 헤드라인)
+  var uniqueNews = [];
+  var seenPhrases = new Set();
+  for (var item of riskNews) {
+    var key = item.headline.toLowerCase().slice(0, 40);
+    if (!seenPhrases.has(key)) {
+      seenPhrases.add(key);
+      uniqueNews.push(item);
+    }
+  }
+
+  var result = {
+    news: uniqueNews.slice(0, 8),
+    reddit: riskReddit.slice(0, 5),
+    kr_news: krRiskNews.slice(0, 5),
+    total_alerts: uniqueNews.length + riskReddit.length + krRiskNews.length,
+    fetched_at: new Date().toISOString()
+  };
+
+  MARKET_RISK_CACHE = { data: result, timestamp: Date.now() };
+  return result;
+}
+
 // ===== H: 학술 트렌드 분석 (주 1회 갱신) =====
 var ACADEMIC_CACHE_FILE = path.join(__dirname, '.academic_trend_cache.json');
 var academicTrendCache = { data: null, timestamp: 0 };
@@ -1487,6 +1664,8 @@ async function refreshAcademicTrends() {
 
     var trends = {};
     var sectorScores = data.sector_scores;
+    var papersBySector = data.papers_by_sector || {};
+    var referencedPapers = []; // 리포트 하단 출처 나열용
 
     for (var sector of Object.keys(sectorScores)) {
       var ss = sectorScores[sector];
@@ -1499,12 +1678,20 @@ async function refreshAcademicTrends() {
       else if (avgImpact >= 2) score = 2;    // 보통
       else if (avgImpact < 1) score = -2;    // 관심 감소
 
+      // 섹터별 대표 논문 제목(상위 3) — 추천 점수의 근거 출처
+      var sp = (papersBySector[sector] && papersBySector[sector].papers) || [];
+      var sampleTitles = sp.slice(0, 3).map(function (p) {
+        return { title: p.title, date: p.publication_date || '', sector: sector };
+      });
+      sampleTitles.forEach(function (t) { if (t.title) referencedPapers.push(t); });
+
       trends[sector] = {
         total_papers: ss.total_papers,
         high_impact_papers: ss.high_impact_papers,
         avg_impact_score: avgImpact,
         signal: ss.investment_signal,
-        academic_score: score
+        academic_score: score,
+        sample_papers: sampleTitles
       };
     }
 
@@ -1534,6 +1721,7 @@ async function refreshAcademicTrends() {
     academicTrendCache = {
       data: investSectorScores,
       raw_trends: trends,
+      referenced_papers: referencedPapers,
       timestamp: Date.now(),
       generated_at: new Date().toISOString()
     };
@@ -1606,16 +1794,16 @@ const ROTATION_SIGNALS = [
 // 섹터 → ISA 종목 매핑
 const SECTOR_MAPPING = {
   '반도체': ['반도체', '미국반도체'],
-  'AI/로봇': ['IT/플랫폼', 'IT/디지털'],
-  '혁신성장': ['IT/플랫폼', 'IT/디지털', '미국나스닥'],
+  'AI/로봇': ['IT/플랫폼', 'IT/디지털', 'AI/로봇', 'AI전력인프라', '미국빅테크'],
+  '혁신성장': ['IT/플랫폼', 'IT/디지털', '미국나스닥', '미국빅테크'],
   '클린에너지': ['배터리', '2차전지', '2차전지소재', '화학/배터리'],
   '크립토': [],
-  '바이오': [],
+  '바이오': ['바이오', '헬스케어'],
   '중국': ['중국전기차'],
   '인도': ['인도'],
   '한국': ['국내지수'],
   '시장전체': ['미국지수'],
-  '기술주': ['미국나스닥', 'IT/플랫폼']
+  '기술주': ['미국나스닥', 'IT/플랫폼', '미국빅테크']
 };
 
 async function detectRotation() {
@@ -1667,9 +1855,228 @@ async function detectRotation() {
   return { detected, outflows, inflows, sectorChanges, spyChange, market_context: context };
 }
 
+// ===== 시장 레짐 분석 (상승세/횡보/하락세 판단) =====
+var marketRegimeCache = { data: null, timestamp: 0 };
+var REGIME_CACHE_DURATION = 2 * 60 * 60 * 1000; // 2시간
+
+async function analyzeMarketRegime() {
+  if (marketRegimeCache.data && (Date.now() - marketRegimeCache.timestamp < REGIME_CACHE_DURATION)) {
+    return marketRegimeCache.data;
+  }
+
+  try {
+    // 1. 코스피/코스닥 지수 데이터 (Yahoo Finance, 3개월)
+    var resp = await axios.get('https://query1.finance.yahoo.com/v8/finance/spark', {
+      params: { symbols: '^KS11,^KQ11', range: '3mo', interval: '1d' },
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+      timeout: 10000
+    });
+
+    var kospiData = resp.data['^KS11'];
+    var kosdaqData = resp.data['^KQ11'];
+
+    var kospiCloses = (kospiData && kospiData.close) ? kospiData.close.filter(function(c) { return c !== null; }) : [];
+    var kosdaqCloses = (kosdaqData && kosdaqData.close) ? kosdaqData.close.filter(function(c) { return c !== null; }) : [];
+
+    var kospiCurrent = kospiCloses.length > 0 ? kospiCloses[kospiCloses.length - 1] : 0;
+    var kospi3moHigh = kospiCloses.length > 0 ? Math.max.apply(null, kospiCloses) : 0;
+    var kospi20dma = kospiCloses.length >= 20 ? kospiCloses.slice(-20).reduce(function(a, b) { return a + b; }, 0) / 20 : kospiCurrent;
+    var kospi5dma = kospiCloses.length >= 5 ? kospiCloses.slice(-5).reduce(function(a, b) { return a + b; }, 0) / 5 : kospiCurrent;
+
+    var kosdaqCurrent = kosdaqCloses.length > 0 ? kosdaqCloses[kosdaqCloses.length - 1] : 0;
+    var kosdaq3moHigh = kosdaqCloses.length > 0 ? Math.max.apply(null, kosdaqCloses) : 0;
+
+    // 전고점 대비 %
+    var kospiVsHigh = kospi3moHigh > 0 ? Math.round((kospiCurrent / kospi3moHigh - 1) * 1000) / 10 : 0;
+    var kosdaqVsHigh = kosdaq3moHigh > 0 ? Math.round((kosdaqCurrent / kosdaq3moHigh - 1) * 1000) / 10 : 0;
+
+    // 최근 5일 추세 (연속 상승/하락)
+    var recent5 = kospiCloses.slice(-5);
+    var upDays = 0, downDays = 0;
+    for (var i = 1; i < recent5.length; i++) {
+      if (recent5[i] > recent5[i - 1]) upDays++;
+      else if (recent5[i] < recent5[i - 1]) downDays++;
+    }
+
+    // 5일 수익률
+    var kospi5dReturn = recent5.length >= 5 ? Math.round((recent5[4] / recent5[0] - 1) * 1000) / 10 : 0;
+    // 20일 수익률
+    var kospi20dReturn = kospiCloses.length >= 20 ? Math.round((kospiCurrent / kospiCloses[kospiCloses.length - 20] - 1) * 1000) / 10 : 0;
+
+    // 2. 외국인 순매수 (오늘치 - 네이버 API)
+    var foreignToday = 0;
+    try {
+      var naverResp = await axios.get('https://m.stock.naver.com/api/index/KOSPI/integration', { timeout: 10000 });
+      if (naverResp.data && naverResp.data.dealTrendInfo) {
+        foreignToday = parseInt((naverResp.data.dealTrendInfo.foreignValue || '0').replace(/[+,]/g, '')) || 0;
+      }
+    } catch (e) {}
+
+    // 3. 외국인 연속 매수/매도일수 추정 (과거 5일 지수 추세 + 오늘 외국인으로 추정)
+    // 정확한 일별 데이터 없으므로, 캐시 파일에서 축적
+    var foreignStreak = 0;
+    var foreignStreakFile = path.join(__dirname, '.foreign_streak.json');
+    try {
+      var streakData = JSON.parse(fs.readFileSync(foreignStreakFile, 'utf8'));
+      var lastDate = streakData.lastDate || '';
+      var today = new Date().toISOString().slice(0, 10);
+
+      if (lastDate !== today) {
+        // 새로운 날 → streak 업데이트
+        if (foreignToday > 0 && streakData.streak >= 0) {
+          foreignStreak = streakData.streak + 1;
+        } else if (foreignToday > 0 && streakData.streak < 0) {
+          foreignStreak = 1;
+        } else if (foreignToday < 0 && streakData.streak <= 0) {
+          foreignStreak = streakData.streak - 1;
+        } else if (foreignToday < 0 && streakData.streak > 0) {
+          foreignStreak = -1;
+        }
+        fs.writeFileSync(foreignStreakFile, JSON.stringify({ streak: foreignStreak, lastDate: today, lastValue: foreignToday }));
+      } else {
+        foreignStreak = streakData.streak;
+      }
+    } catch (e) {
+      // 파일 없으면 새로 생성
+      foreignStreak = foreignToday > 0 ? 1 : foreignToday < 0 ? -1 : 0;
+      fs.writeFileSync(foreignStreakFile, JSON.stringify({ streak: foreignStreak, lastDate: new Date().toISOString().slice(0, 10), lastValue: foreignToday }));
+    }
+
+    // 4. 시장 레짐 판단 (점수 기반)
+    var regimeScore = 0;
+
+    // 전고점 대비 위치 (최대 ±15)
+    if (kospiVsHigh >= -5) regimeScore += 10;          // 전고점 근접 → 강세
+    else if (kospiVsHigh >= -10) regimeScore += 5;     // 약간 조정
+    else if (kospiVsHigh >= -20) regimeScore -= 5;     // 조정 구간
+    else regimeScore -= 15;                             // 급락/하락장
+
+    // 이동평균 위치 (최대 ±10)
+    if (kospiCurrent > kospi20dma && kospiCurrent > kospi5dma) regimeScore += 10;  // 이평선 위 = 상승
+    else if (kospiCurrent > kospi20dma) regimeScore += 5;
+    else if (kospiCurrent < kospi20dma && kospiCurrent < kospi5dma) regimeScore -= 10; // 이평선 아래 = 하락
+    else regimeScore -= 3;
+
+    // 최근 5일 추세 (최대 ±8)
+    if (upDays >= 4) regimeScore += 8;
+    else if (upDays >= 3) regimeScore += 4;
+    else if (downDays >= 4) regimeScore -= 8;
+    else if (downDays >= 3) regimeScore -= 4;
+
+    // 외국인 연속 매수/매도 (최대 ±12)
+    if (foreignStreak >= 5) regimeScore += 12;
+    else if (foreignStreak >= 3) regimeScore += 8;
+    else if (foreignStreak >= 1) regimeScore += 3;
+    else if (foreignStreak <= -5) regimeScore -= 12;
+    else if (foreignStreak <= -3) regimeScore -= 8;
+    else if (foreignStreak <= -1) regimeScore -= 3;
+
+    // 코스닥 추가 감점 (코스닥이 특히 나쁘면)
+    if (kosdaqVsHigh < -30) regimeScore -= 5;
+
+    // 레짐 분류
+    var regime = 'neutral';
+    if (regimeScore >= 15) regime = 'bull';         // 상승세
+    else if (regimeScore >= 5) regime = 'recovery'; // 회복 중
+    else if (regimeScore <= -15) regime = 'bear';   // 하락세
+    else if (regimeScore <= -5) regime = 'correction'; // 조정 구간
+    // else: 'neutral' (횡보)
+
+    // 레짐에 따른 투자 점수 조정값 (phase1에 일괄 적용)
+    var regimeAdjust = 0;
+    if (regime === 'bull') regimeAdjust = 5;
+    else if (regime === 'recovery') regimeAdjust = 0;
+    else if (regime === 'neutral') regimeAdjust = -3;
+    else if (regime === 'correction') regimeAdjust = -8;
+    else if (regime === 'bear') regimeAdjust = -15;
+
+    var result = {
+      kospi: { current: Math.round(kospiCurrent * 100) / 100, high_3mo: Math.round(kospi3moHigh * 100) / 100, vs_high: kospiVsHigh, ma20: Math.round(kospi20dma * 100) / 100, return_5d: kospi5dReturn, return_20d: kospi20dReturn },
+      kosdaq: { current: Math.round(kosdaqCurrent * 100) / 100, high_3mo: Math.round(kosdaq3moHigh * 100) / 100, vs_high: kosdaqVsHigh },
+      foreign: { today: foreignToday, streak: foreignStreak },
+      regime: regime,
+      regime_score: regimeScore,
+      regime_adjust: regimeAdjust,
+      summary: getRegimeSummary(regime, kospiVsHigh, foreignStreak, kospi5dReturn)
+    };
+
+    marketRegimeCache = { data: result, timestamp: Date.now() };
+    return result;
+  } catch (e) {
+    return { regime: 'unknown', regime_score: 0, regime_adjust: 0, summary: '시장 데이터 수집 실패' };
+  }
+}
+
+function getRegimeSummary(regime, vsHigh, foreignStreak, return5d) {
+  var parts = [];
+  if (regime === 'bull') parts.push('📈 시장 상승세');
+  else if (regime === 'recovery') parts.push('🔄 회복 구간');
+  else if (regime === 'neutral') parts.push('➡️ 횡보 중');
+  else if (regime === 'correction') parts.push('📉 조정 구간');
+  else if (regime === 'bear') parts.push('🔻 하락세');
+
+  parts.push('전고점 대비 ' + vsHigh + '%');
+
+  if (foreignStreak >= 3) parts.push('외국인 ' + foreignStreak + '일 연속 순매수');
+  else if (foreignStreak <= -3) parts.push('외국인 ' + Math.abs(foreignStreak) + '일 연속 순매도 ⚠️');
+  else if (foreignStreak > 0) parts.push('외국인 순매수 전환');
+  else if (foreignStreak < 0) parts.push('외국인 순매도');
+
+  if (return5d > 3) parts.push('5일 +' + return5d + '% 반등');
+  else if (return5d < -3) parts.push('5일 ' + return5d + '% 급락');
+
+  return parts.join(' | ');
+}
+
 async function analyzeISAUniverse() {
   // ========== 1단계: 가격 스크리닝 (빠름) ==========
   const rotation = await detectRotation();
+  const marketRegime = await analyzeMarketRegime();
+
+  // 과거 백업에서 연속 추천 + 가격 추이 계산 (모멘텀 보너스용)
+  var prevBackups = [];
+  try {
+    var bkDir = path.join(__dirname, 'backups');
+    var bkFiles = fs.readdirSync(bkDir).filter(function(f) { return f.startsWith('mingyulist_') && f.endsWith('.json'); });
+    bkFiles.sort().reverse();
+    prevBackups = bkFiles.slice(0, 7).map(function(f) {
+      try { return JSON.parse(fs.readFileSync(path.join(bkDir, f), 'utf8')); }
+      catch (e) { return null; }
+    }).filter(Boolean);
+  } catch (e) {}
+
+  function getPhase1Streak(symbol) {
+    var streak = 0;
+    var prices = [];
+    for (var i = 0; i < prevBackups.length; i++) {
+      var found = (prevBackups[i].recommendations || []).find(function(r) { return r.symbol === symbol; });
+      if (found) {
+        streak++;
+        prices.push(found.price);
+      } else {
+        break;
+      }
+    }
+    // 연속 상승 여부: 전체 기간 순상승 판단 (중간 소폭 하락 허용)
+    // prices[0]=최신, prices[n-1]=가장 오래된 것
+    var trending_up = false;
+    if (prices.length >= 2) {
+      var oldest = prices[prices.length - 1];
+      var newest = prices[0];
+      // 기본: 시작 대비 최근이 올랐으면 상승 추세
+      trending_up = newest > oldest;
+      // 추가: 시작 대비 보합(-0.5% 이내)이어도, 중간에 하락 후 회복 패턴이면 인정
+      // (예: 2일 상승 → 3일째 소폭 하락 → 4일째 다시 상승)
+      if (!trending_up && prices.length >= 3) {
+        var totalChange = (newest - oldest) / oldest * 100;
+        // 전체 -1% 이내 하락이면서, 최근 1일은 직전 대비 상승이면 허용
+        if (totalChange >= -1 && prices.length >= 2 && prices[0] > prices[1]) {
+          trending_up = true;
+        }
+      }
+    }
+    return { streak: streak, trending_up: trending_up, prices: prices };
+  }
 
   const penaltySectors = new Set();
   const bonusSectors = new Set();
@@ -1707,7 +2114,7 @@ async function analyzeISAUniverse() {
     else if (item.type === 'kr_stock' && item.weight < 1.0) score -= 8;
 
     // 활성 섹터
-    var hotSectors = ['반도체', '미국나스닥', '미국지수', 'AI/로봇', '미국반도체', 'IT/플랫폼'];
+    var hotSectors = ['반도체', '미국나스닥', '미국지수', 'AI/로봇', '미국반도체', 'IT/플랫폼', 'AI전력인프라', '미국빅테크'];
     if (hotSectors.includes(item.sector)) score += signalWeights.hot_sector_bonus;
 
     // 로테이션 반영
@@ -1724,12 +2131,41 @@ async function analyzeISAUniverse() {
     if (todayChange > 2 && !bonusSectors.has(item.sector)) score -= 15;
     if (change5d !== null && change5d > 5 && !bonusSectors.has(item.sector)) score -= 10;
 
+    // 연속 추천 + 연속 상승 모멘텀 보너스 (최대 +20점)
+    // 3일 이상 연속 추천 & 꾸준히 오르고 있으면 확신도 높음
+    var streakData = getPhase1Streak(item.symbol);
+    var streakBonus = 0;
+    if (streakData.streak >= 2 && streakData.trending_up) {
+      // 연속 추천 + 상승 추세: 일수에 비례해 가산
+      if (streakData.streak >= 5) streakBonus = 20;
+      else if (streakData.streak >= 4) streakBonus = 16;
+      else if (streakData.streak >= 3) streakBonus = 12;
+      else streakBonus = 7; // 2일 연속 + 상승
+    } else if (streakData.streak >= 3 && !streakData.trending_up) {
+      // 연속 추천이지만 하락 추세: 소폭 가산 (추천 연속성 자체는 의미)
+      streakBonus = 3;
+    }
+    score += streakBonus;
+
+    // 시장 레짐 반영 (국내 종목: 전체 적용, 해외 ETF: 절반만)
+    var isOverseasETF = item.type === 'kr_etf' && (
+      item.sector.includes('미국') || item.sector.includes('글로벌') ||
+      item.sector === '인도' || item.sector === '중국전기차'
+    );
+    if (isOverseasETF) {
+      score += Math.round(marketRegime.regime_adjust * 0.3); // 해외 ETF는 30%만 반영
+    } else {
+      score += marketRegime.regime_adjust; // 국내 종목/국내 ETF는 100% 반영
+    }
+
     phase1.push({
       ...item,
       price: priceData.price,
       todayChange,
       change5d,
       phase1Score: Math.round(score * 10) / 10,
+      streak: streakData.streak,
+      streak_trending_up: streakData.trending_up,
       rotation_effect: penaltySectors.has(item.sector) ? '⚠️ 자금유출 섹터' : bonusSectors.has(item.sector) ? '🟢 자금유입 섹터' : null
     });
   }
@@ -1759,7 +2195,12 @@ async function analyzeISAUniverse() {
     '인도': 'India Nifty stock',
     '금융': 'Korea bank financial',
     '화학/배터리': 'chemical battery Korea',
-    '소재': 'materials stock Korea'
+    '소재': 'materials stock Korea',
+    '바이오': 'biotech pharma stock',
+    '헬스케어': 'healthcare medical stock',
+    'AI전력인프라': 'AI power infrastructure data center stock',
+    'AI/로봇': 'AI robotics humanoid stock',
+    '미국빅테크': 'big tech FAANG magnificent seven stock'
   };
 
   var TARGET_PICKS = 10;
@@ -1941,7 +2382,7 @@ async function analyzeISAUniverse() {
     };
   });
 
-  return { recommendations, rotation, macro: macro, screened: phase1.length, analyzed: analyzed, twitter_calls: Object.keys(twitterBySector).length };
+  return { recommendations, rotation, macro: macro, market_regime: marketRegime, screened: phase1.length, analyzed: analyzed, twitter_calls: Object.keys(twitterBySector).length };
 }
 
 function generateReason(pick, rotation) {
@@ -2010,6 +2451,10 @@ function generateReason(pick, rotation) {
   // 섹터/신뢰
   if (pick.weight >= 1.2) parts.push('우량 대형주/ETF');
 
+  // 연속 추천 + 상승 모멘텀
+  if (pick.streak >= 3 && pick.streak_trending_up) parts.push('🔥 ' + pick.streak + '일 연속 추천 & 상승 중');
+  else if (pick.streak >= 2 && pick.streak_trending_up) parts.push('📈 연속 추천 & 상승 추세');
+
   // 밸류에이션 (시가총액/업종PER 비교)
   if (pick.valuation) {
     if (pick.valuation.per_vs_sector !== null && pick.valuation.per_vs_sector <= -20) {
@@ -2062,7 +2507,16 @@ app.get('/mingyulist', async (req, res) => {
 
     var responseData = {
       title: '🎯 민규의 ISA 매수 추천 리스트',
-      strategy: 'ETF 우선 + 섹터 로테이션 감지 + 대형주 위주 + 업종PER 비교 기반',
+      strategy: 'ETF 우선 + 섹터 로테이션 감지 + 대형주 위주 + 업종PER 비교 + 시장레짐 반영',
+      market_regime: result.market_regime ? {
+        regime: result.market_regime.regime,
+        summary: result.market_regime.summary,
+        kospi: result.market_regime.kospi,
+        kosdaq: result.market_regime.kosdaq,
+        foreign: result.market_regime.foreign,
+        regime_score: result.market_regime.regime_score,
+        regime_adjust: result.market_regime.regime_adjust
+      } : null,
       market_analysis: {
         context: rotation.market_context,
         rotation_detected: rotation.detected,
@@ -2353,6 +2807,16 @@ app.get('/report', async (req, res) => {
     var lines = [];
     var divider = '════════════════════════════════════════════════════════════════';
 
+    // 0. 데일리 다이제스트 스냅샷 (메일 발송 시 갱신됨) — 있으면 맨 위에 표시
+    try {
+      var ldFile = path.join(__dirname, '.last_digest.txt');
+      var ld = JSON.parse(fs.readFileSync(ldFile, 'utf8'));
+      if (ld && ld.text) {
+        lines.push(ld.text);
+        lines.push('', divider, '  ▼ 상세 시장/추천 데이터', divider, '');
+      }
+    } catch (e) {}
+
     // 1. Watchlist
     var watchData = await fetchAllStocks();
     lines.push('', divider, '  📊 오늘의 주식 시장 요약', divider, '');
@@ -2360,7 +2824,10 @@ app.get('/report', async (req, res) => {
     lines.push('', divider, '  📊 주요 지수', divider);
     for (var q of watchData.watchlist.main_index.quotes) {
       var arrow = q.change_percentage.startsWith('-') ? '▼' : '▲';
-      lines.push('  ' + q.ticker.padEnd(8) + ' ' + q.desc.padEnd(18) + ' ' + q.price.padStart(10) + ' USD  ' + arrow + ' ' + q.change_percentage);
+      var isKoreaIndex = (q.ticker === 'KOSPI' || q.ticker === 'KOSDAQ');
+      var unit = isKoreaIndex ? 'pt' : 'USD';
+      var displayPrice = isKoreaIndex ? Number(q.price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : q.price;
+      lines.push('  ' + q.ticker.padEnd(8) + ' ' + q.desc.padEnd(18) + ' ' + displayPrice.padStart(10) + ' ' + unit + '  ' + arrow + ' ' + q.change_percentage);
     }
     lines.push('', divider, '  🏭 섹터별 동향', divider);
     for (var q of watchData.watchlist.sector_etf.quotes) {
@@ -2437,6 +2904,12 @@ app.get('/report', async (req, res) => {
         var ma = mgData.market_analysis || {};
         if (ma.context) lines.push('  시장: ' + ma.context);
       }
+
+      // 시장 레짐 표시
+      if (mgData.market_regime && mgData.market_regime.summary) {
+        lines.push('  시장레짐: ' + mgData.market_regime.summary);
+      }
+
       lines.push('  생성: ' + (mgData.generated_at || '').slice(0, 16));
 
       // 환율/금리 표시
@@ -2528,8 +3001,161 @@ app.get('/report', async (req, res) => {
       lines.push('  총 배분: ' + (mgData.total_allocated || ''));
     }
 
+    // ===== 시장 위험 경고 섹션 (자동 수집) =====
+    var alertLines = [];
+
+    // QQQ (나스닥100) 하락률 체크
+    var qqqQuote = watchData.watchlist.main_index.quotes.find(function(q) { return q.ticker === 'QQQ'; });
+    var spyQuote = watchData.watchlist.main_index.quotes.find(function(q) { return q.ticker === 'SPY'; });
+    var soxxQuote = watchData.watchlist.sector_etf.quotes.find(function(q) { return q.ticker === 'SOXX'; });
+
+    var qqqChange = qqqQuote ? parseFloat(qqqQuote.change_percentage) : 0;
+    var spyChange = spyQuote ? parseFloat(spyQuote.change_percentage) : 0;
+    var soxxChange = soxxQuote ? parseFloat(soxxQuote.change_percentage) : 0;
+
+    // 트리거: QQQ -1% 이상 또는 SOXX -3% 이상 또는 SPY -1.5% 이상
+    if (qqqChange <= -1 || soxxChange <= -3 || spyChange <= -1.5) {
+      // 뉴스/커뮤니티 자동 수집
+      var riskAlerts = await fetchMarketRiskAlerts();
+
+      alertLines.push('');
+      alertLines.push(divider);
+      alertLines.push('  🚨 [시장 위험 경고] 나스닥/반도체 급락 감지');
+      alertLines.push(divider);
+      alertLines.push('');
+
+      // 지수 하락 현황
+      if (qqqChange <= -1) alertLines.push('  ⚠️  QQQ(나스닥100): ' + qqqQuote.change_percentage);
+      if (spyChange <= -1.5) alertLines.push('  ⚠️  SPY(S&P500): ' + spyQuote.change_percentage);
+      if (soxxChange <= -3) alertLines.push('  ⚠️  SOXX(반도체): ' + soxxQuote.change_percentage);
+
+      // 한줄 요약 자동 생성
+      var summaryParts = [];
+      if (soxxChange <= -3) summaryParts.push('반도체 섹터 급락(' + soxxQuote.change_percentage + ')');
+      if (qqqChange <= -1) summaryParts.push('나스닥100 조정 영역 접근');
+      if (spyChange <= -1.5) summaryParts.push('S&P500 약세');
+      // 뉴스 헤드라인에서 키워드 추출하여 원인 파악
+      var causeParts = [];
+      if (riskAlerts.news && riskAlerts.news.length > 0) {
+        var allHeadlines = riskAlerts.news.map(function(n) { return n.headline.toLowerCase(); }).join(' ');
+        if (allHeadlines.includes('correction')) causeParts.push('기술적 조정 진입');
+        if (allHeadlines.includes('chip') || allHeadlines.includes('semiconductor')) causeParts.push('반도체주 매도세');
+        if (allHeadlines.includes('ai') && (allHeadlines.includes('spend') || allHeadlines.includes('capex'))) causeParts.push('AI 투자 지속성 의문');
+        if (allHeadlines.includes('china')) causeParts.push('중국 경쟁 심화');
+        if (allHeadlines.includes('oil') || allHeadlines.includes('war') || allHeadlines.includes('iran')) causeParts.push('지정학 리스크');
+        if (allHeadlines.includes('recession') || allHeadlines.includes('rate')) causeParts.push('경기침체 우려');
+        if (allHeadlines.includes('tariff') || allHeadlines.includes('trade war')) causeParts.push('관세/무역갈등');
+      }
+      var summary = '  💬 ';
+      if (summaryParts.length > 0) summary += summaryParts.join(' + ');
+      if (causeParts.length > 0) summary += ' → 원인: ' + causeParts.slice(0, 3).join(', ');
+      alertLines.push(summary);
+      alertLines.push('');
+
+      // 영문 뉴스 (Google News 자동수집)
+      if (riskAlerts.news && riskAlerts.news.length > 0) {
+        alertLines.push('  📰 해외 뉴스 (' + riskAlerts.news.length + '건):');
+        for (var n = 0; n < Math.min(riskAlerts.news.length, 5); n++) {
+          alertLines.push('  • [' + riskAlerts.news[n].category + '] ' + riskAlerts.news[n].headline);
+        }
+        alertLines.push('');
+      }
+
+      // Reddit 커뮤니티
+      if (riskAlerts.reddit && riskAlerts.reddit.length > 0) {
+        alertLines.push('  🗣️ 해외 커뮤니티 (' + riskAlerts.reddit.length + '건):');
+        for (var r = 0; r < Math.min(riskAlerts.reddit.length, 3); r++) {
+          alertLines.push('  • [r/' + riskAlerts.reddit[r].subreddit + ' ↑' + riskAlerts.reddit[r].upvotes + '] ' + riskAlerts.reddit[r].title);
+        }
+        alertLines.push('');
+      }
+
+      // 한국 뉴스
+      if (riskAlerts.kr_news && riskAlerts.kr_news.length > 0) {
+        alertLines.push('  🇰🇷 국내 뉴스 (' + riskAlerts.kr_news.length + '건):');
+        for (var k = 0; k < Math.min(riskAlerts.kr_news.length, 3); k++) {
+          alertLines.push('  • ' + riskAlerts.kr_news[k]);
+        }
+        alertLines.push('');
+      }
+
+      // 대응 코멘트 자동 생성
+      alertLines.push('  ────────────────────────────────────────');
+      var actionParts = [];
+      var watchParts = [];
+
+      // 대응 판단
+      if (soxxChange <= -3) actionParts.push('반도체/AI 관련 ETF 신규 매수 보류');
+      if (qqqChange <= -2) actionParts.push('나스닥 비중 추가 매수 보류');
+      else if (qqqChange <= -1) actionParts.push('나스닥 비중 확대 신중');
+      if (spyChange <= -1.5) actionParts.push('미국 지수 전반 관망');
+
+      // 뉴스 기반 주시 사항
+      if (riskAlerts.news && riskAlerts.news.length > 0) {
+        var allHL = riskAlerts.news.map(function(n) { return n.headline.toLowerCase(); }).join(' ');
+        if (allHL.includes('correction')) watchParts.push('조정 깊이·기간 확인 (추가 하락 가능)');
+        if (allHL.includes('earning') || allHL.includes('result')) watchParts.push('빅테크 실적발표 결과 확인');
+        if (allHL.includes('ai') && (allHL.includes('spend') || allHL.includes('capex') || allHL.includes('invest'))) watchParts.push('AI capex 방향성 (Meta/Amazon/MS 실적)');
+        if (allHL.includes('china') || allHL.includes('competition')) watchParts.push('중국 반도체 자립 속도');
+        if (allHL.includes('oil') || allHL.includes('iran') || allHL.includes('war')) watchParts.push('중동 정세·유가 방향');
+        if (allHL.includes('fed') || allHL.includes('rate') || allHL.includes('inflation')) watchParts.push('Fed 금리 정책 시그널');
+      }
+
+      // 기본 대응/주시 (비어있을 경우)
+      if (actionParts.length === 0) actionParts.push('급락 섹터 신규 진입 보류, 기존 포지션 유지');
+      if (watchParts.length === 0) watchParts.push('추가 하락 여부 1~2일 관망');
+
+      alertLines.push('  📋 대응: ' + actionParts.join(' / '));
+      alertLines.push('  📋 주시: ' + watchParts.slice(0, 3).join(' / '));
+      alertLines.push('');
+
+      // 수집 시간 표시
+      alertLines.push('  📋 수집: ' + (riskAlerts.fetched_at || '').slice(0, 16) + ' | 총 ' + riskAlerts.total_alerts + '건 감지');
+      alertLines.push('');
+    }
+
+    if (alertLines.length > 0) {
+      lines = lines.concat(alertLines);
+    }
+
+    // ── 참조 출처: 추천 점수 산정에 쓰인 논문/뉴스 제목 ──────────
+    try {
+      var refLines = [];
+      // 1) 학술 트렌드 근거 논문 (추천의 📚 학술점수 출처)
+      var atc = {};
+      try { atc = JSON.parse(fs.readFileSync(ACADEMIC_CACHE_FILE, 'utf8')); } catch (e) {}
+      var papers = (atc && atc.referenced_papers) || [];
+      if (papers.length) {
+        refLines.push('', '  📚 참조 논문 (추천 학술점수 근거 · OpenAlex)');
+        var seenP = {};
+        papers.forEach(function (p) {
+          if (!p.title || seenP[p.title]) return;
+          seenP[p.title] = 1;
+          var d = p.date ? ' (' + p.date + ')' : '';
+          refLines.push('    - [' + (p.sector || '') + '] ' + p.title + d);
+        });
+      }
+      // 2) 글로벌 뉴스 근거 (research_cache의 tech_news)
+      try {
+        var rc = JSON.parse(fs.readFileSync(path.join(__dirname, '.research_cache.json'), 'utf8'));
+        var news = (rc.sections && rc.sections.tech_news && rc.sections.tech_news.items) || [];
+        if (news.length) {
+          refLines.push('', '  📰 참조 뉴스');
+          news.forEach(function (it) {
+            refLines.push('    - ' + (it.date ? it.date + ' ' : '') + it.title);
+          });
+        }
+      } catch (e) {}
+
+      if (refLines.length) {
+        lines.push('', divider, '  🔎 참조 출처 (Sources)', divider);
+        lines.push.apply(lines, refLines);
+        lines.push('    ※ 추천 점수(학술/글로벌)는 위 자료의 집계를 반영합니다.');
+      }
+    } catch (e) {}
+
     // Footer
-    lines.push(divider, '  Generated: ' + new Date().toISOString(), '  Server: api_server_paper:3000', divider, '');
+    lines.push('', divider, '  Generated: ' + new Date().toISOString(), '  Server: api_server_paper:3000', divider, '');
 
     res.set('Content-Type', 'text/plain; charset=utf-8');
     res.send(lines.join('\n'));

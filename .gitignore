@@ -4,6 +4,18 @@ node_modules/
 .mingyulist_overnight.json
 .mingyulist_weights.json
 .academic_trend_cache.json
+.digest_cache.json
+.research_cache.json
+.last_digest.txt
+.foreign_streak.json
+results.json
+search.log
 backups/
 /tmp/
 *.log
+
+# 개인정보 / 시크릿 (git push 제외)
+mingyu_profile.md
+.env
+*.secrets.env
+secrets.env
