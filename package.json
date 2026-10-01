@@ -4,12 +4,17 @@
   "description": "AI-powered ISA stock & ETF investment advisor with self-improving backtest engine",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "digest:collect": "node collect-digest.js",
+    "digest": "node daily-digest.js",
+    "digest:send": "node daily-digest.js --send",
+    "digest:json": "node daily-digest.js --json"
   },
   "dependencies": {
     "axios": "1.7.2",
     "cors": "^2.8.5",
     "express": "4.18.2",
+    "nodemailer": "^6.9.14",
     "xml2js": "0.6.2"
   }
 }

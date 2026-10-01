@@ -93,6 +93,7 @@ sudo systemctl start api-server
 | 06:30 (평일) | `cron-overnight.sh` | 미장 마감 → overnight 보정 + watchlist 갱신 |
 | 09:00 (토/일) | curl | 주말 뉴스/리서치 갱신 |
 | 09:00 (월) | curl | 학술 트렌드 갱신 |
+| 13:00 (매일) | `cron-digest.sh` | 📬 민규 데일리 다이제스트 메일 발송 |
 
 ```bash
 # crontab 등록
@@ -110,6 +111,12 @@ stock-advisor/
 ├── cron-main.sh           # 메인 분석 + 백테스트 + termbin
 ├── cron-morning.sh        # 오전 watchlist 갱신 + termbin
 ├── cron-overnight.sh      # overnight 보정 + watchlist 갱신
+├── cron-digest.sh         # 📬 데일리 다이제스트 (취합→발송, 13:00 KST)
+├── collect-digest.js      # 2레이어 취합기 → .digest_cache.json (공공데이터/뉴스)
+├── digest-sources.js      # 1레이어 수집 소스 모듈 (API 우선 + 폴백)
+├── daily-digest.js        # 3레이어 발송기 (캐시만 읽어 랩핑·발송, 네트워크 X)
+├── mailer.js              # SMTP 발송 모듈 (nodemailer, env 기반)
+├── mingyu_profile.md      # 민규 프로필 + digest-config (git 제외, 개인정보)
 ├── publish-report.sh      # termbin 업로드 스크립트
 ├── backups/               # 일자별 추천 백업 (자동 생성)
 │   └── mingyulist_YYYY-MM-DD.json
@@ -117,7 +124,8 @@ stock-advisor/
 ├── .mingyulist_cache.json # 메인 분석 캐시
 ├── .mingyulist_overnight.json # overnight 보정 캐시
 ├── .mingyulist_weights.json   # 자기개선 가중치
-└── .academic_trend_cache.json # 학술 트렌드 캐시
+├── .academic_trend_cache.json # 학술 트렌드 캐시
+└── .digest_cache.json         # 다이제스트 취합 캐시 (collect-digest.js 생성)
 ```
 
 ## 자기개선 엔진
@@ -159,6 +167,81 @@ KODEX 200, KODEX 코스닥150, KODEX 반도체, KODEX 은행, KODEX 2차전지�
 ## ⚠️ 면책
 
 AI 기반 참고용 추천이며, 투자 판단은 본인 책임입니다. 이 시스템의 추천을 맹신하지 마세요.
+
+## 📬 데일리 다이제스트 메일 (3레이어)
+
+민규 개인화 브리핑을 매일 **한국시간 13:00**에 이메일 1통으로 보냅니다.
+관심사(주식·부동산·정부지원·청년혜택·기술뉴스·날씨)를 짧게 요약하며, 공고/청약은 **이름 + 날짜**만 담습니다.
+
+### 아키텍처 (3레이어)
+
+```
+1레이어 (수집 소스)   : 네이버뉴스 · GeekNews · LH · K-Startup · 복지로 · 기상청 · stock-advisor …
+2레이어 (취합기)      : ┌ stock-advisor(server.js) → .mingyulist_cache.json / .stock_cache.json  (주식)
+                       └ collect-digest.js         → .digest_cache.json                        (공공데이터/뉴스)
+3레이어 (메일 발송기) : daily-digest.js → 위 캐시들만 읽어 랩핑 후 발송 (네트워크 호출 없음)
+```
+
+- **수집(2레이어)과 발송(3레이어)이 분리**되어, 발송 시점에 외부 API가 죽어도 마지막 취합 캐시로 안정 발송됩니다.
+- 취합 실패한 소스는 **이전 캐시를 유지**(`stale`)하거나, 데이터가 아예 없으면 **해당 섹션 생략**(짧은 메일).
+
+### 콘텐츠 소스
+
+| 섹션 | 소스 (우선순위) | 취합 담당 |
+|------|------|------|
+| 주식(우량 ETF)·시장 | **stock-advisor 로컬 캐시** (k-skill 미사용) | server.js |
+| 청년 복지/적금 | 복지로 공공데이터 API → (미승인 시) 네이버 뉴스 | collect-digest.js |
+| 청약/부동산(서울·금천 우선) | LH 공공데이터 API → (미승인 시) k-skill-proxy | collect-digest.js |
+| 정부지원/부업 | K-Startup 공공데이터 API → (미승인 시) proxy, 커리어 키워드 매칭 | collect-digest.js |
+| 기술 뉴스 | GeekNews RSS + 네이버 뉴스 | collect-digest.js |
+| 날씨 | 기상청 단기예보 (proxy) | collect-digest.js |
+
+> **주식 섹션은 절대 k-skill/외부취합을 쓰지 않고** 로컬 캐시(`.mingyulist_cache.json`, `.stock_cache.json`)에서 직접 읽습니다.
+> LH/K-Startup/복지로는 `DATA_GO_KR_API_KEY` **활용신청 승인 시 공공데이터 API로 자동 전환**되고, 그 전까지는 프록시/뉴스로 폴백합니다.
+
+### 설정 파일
+
+- **프로필/설정**: `mingyu_profile.md` 의 `## digest-config` JSON 블록 (섹션 on/off, 지역, 키워드, `datagokr_endpoint` 오버라이드 등). *개인정보 포함 → git 제외*
+- **시크릿**: `~/.config/stock-advisor/secrets.env` (권한 600, 레포 밖)
+
+```bash
+# ~/.config/stock-advisor/secrets.env 예시
+SMTP_HOST=smtp.naver.com
+SMTP_PORT=587
+SMTP_USER=ache159@naver.com
+SMTP_PASS=<네이버 애플리케이션 비밀번호>   # 로그인 비번 아님! 메일 환경설정 > IMAP/SMTP > 앱 비밀번호
+MAIL_FROM=ache159@naver.com
+MAIL_TO=ache159@naver.com
+DATA_GO_KR_API_KEY=<공공데이터포털 Decoding 키>  # 복지로/LH/K-Startup '활용신청' 승인 후 동작
+```
+
+### 실행
+
+```bash
+npm run digest:collect  # 2레이어: 공공데이터/뉴스 취합 → .digest_cache.json
+npm run digest          # 3레이어 dry-run: 캐시 읽어 본문 미리보기 (발송 X)
+npm run digest:send     # 3레이어 실제 발송
+npm run digest:json     # 조립 결과 JSON (디버깅)
+```
+
+### Cron 등록 (매일 13:00 KST = 04:00 UTC)
+
+```bash
+crontab -e
+# 아래 줄 추가 (cron-digest.sh 가 취합→발송을 순서대로 실행):
+0 4 * * * /home/ubuntu/stock-advisor/cron-digest.sh
+```
+
+### 공공데이터 API 활용신청 (부동산/정부지원/청년복지 실데이터)
+
+승인 전에는 프록시/뉴스로 자동 대체됩니다. 공식 데이터를 쓰려면 [data.go.kr](https://www.data.go.kr)에서 **활용신청**(대부분 자동승인):
+
+- **복지로**: `복지로` 검색 → 복지서비스 목록/상세 OpenAPI
+- **LH 청약**: `LH 분양임대공고문` 검색
+- **K-Startup**: `K-Startup 통합공고` (창업진흥원) 검색
+
+승인 후 마이페이지의 **Decoding 인증키**를 `DATA_GO_KR_API_KEY` 로 저장하면, 다음 취합부터 공공데이터 API로 자동 전환됩니다.
+승인된 API의 정확한 엔드포인트가 다르면 `mingyu_profile.md` 의 해당 섹션에 `"datagokr_endpoint": "<URL>"` 을 넣어 오버라이드할 수 있습니다.
 
 ## License
 
